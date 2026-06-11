@@ -5,7 +5,8 @@
         Width="380" SizeToContent="Height"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False" ShowActivated="False"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        FontFamily="Segoe UI, Segoe UI Emoji">
 
     <Border x:Name="Card" CornerRadius="16" Background="{StaticResource CardBrush}"
             BorderThickness="1.5" BorderBrush="{StaticResource BorderBrush}"

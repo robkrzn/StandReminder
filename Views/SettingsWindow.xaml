@@ -5,7 +5,8 @@
         Width="420" SizeToContent="Height"
         Background="{StaticResource BgBrush}"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        FontFamily="Segoe UI, Segoe UI Emoji">
 
     <StackPanel Margin="28,24,28,24">
 

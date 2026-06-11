@@ -184,7 +184,9 @@ Najprv si prečítaj dokumentáciu doc/PROJECT.md a riaď sa ňou — obsahuje
 architektúru, konvencie (lokalizácia cez Core/Loc.cs, dizajnové tokeny,
 štruktúru priečinkov), build/publish príkazy aj známe pasce.
 Po každej významnej zmene dokumentáciu aktualizuj.
-Aplikácia mi po úprave vždy nasaď a spusti (postup je v dokumentácii).
+Po úprave over, že build prechádza. Nasadenie a spustenie aplikácie
+(publish + reštart, postup v dokumentácii) rob LEN keď si ho vyžiadam —
+pri viacerých zmenách za sebou nechcem reštartovať appku po každej.
 
 Úloha: <sem napíš, čo ideme dorobiť>
 ```

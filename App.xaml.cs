@@ -331,6 +331,13 @@ public partial class App : System.Windows.Application
         if ((DateTime.Now - _statusClosedAt).TotalMilliseconds < 300)
             return;
 
+        OpenStatus();
+    }
+
+    private void OpenStatus()
+    {
+        if (_status != null) return;
+
         _status = new StatusWindow();
         _status.SettingsRequested += () =>
         {
@@ -383,7 +390,11 @@ public partial class App : System.Windows.Application
             if (_phase != Phase.Idle && !_paused)
                 StartPhase(_phase); // re-apply new interval to the current phase
         };
-        _settingsWindow.Closed += (_, _) => _settingsWindow = null;
+        _settingsWindow.Closed += (_, _) =>
+        {
+            _settingsWindow = null;
+            OpenStatus(); // return to the status flyout the user came from
+        };
         _settingsWindow.Show();
         _settingsWindow.Activate();
     }

@@ -4,7 +4,8 @@
         Title="StandReminder"
         Width="320" SizeToContent="Height"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize">
+        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize"
+        FontFamily="Segoe UI, Segoe UI Emoji">
 
     <Border CornerRadius="14" Background="{StaticResource CardBrush}"
             BorderThickness="1.5" BorderBrush="{StaticResource BorderBrush}"

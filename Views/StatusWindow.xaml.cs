@@ -45,8 +45,10 @@ public partial class StatusWindow : Window
     }
 
     public void UpdateView(Phase phase, bool paused, TimeSpan elapsed, TimeSpan remaining,
-                           double fraction, AppSettings settings)
+                           double fraction, AppSettings settings, Stats stats)
     {
+        UpdateStats(stats);
+
         if (paused)
         {
             EmojiText.Text = "⏸";
@@ -87,6 +89,86 @@ public partial class StatusWindow : Window
 
     private static string Fmt(TimeSpan t) =>
         t.TotalHours >= 1 ? t.ToString(@"h\:mm\:ss") : t.ToString(@"mm\:ss");
+
+    // ---------- Daily statistics (last 7 days) ----------
+
+    private const double BarAreaHeight = 42;
+
+    private void UpdateStats(Stats stats)
+    {
+        StatsTitle.Text = Loc.T("StStatsTitle");
+        var today = stats.Today;
+        TodayText.Text = $"🪑 {FmtHours(today.SitSeconds)}  ·  🧍 {FmtHours(today.StandSeconds)}";
+
+        var week = stats.LastWeek();
+        int maxDay = Math.Max(week.Max(w => w.Day.SitSeconds + w.Day.StandSeconds), 1);
+        var culture = new System.Globalization.CultureInfo(Loc.Lang == "en" ? "en-US" : "sk-SK");
+        var sitBrush = (Brush)FindResource("AccentSitBrush");
+        var standBrush = (Brush)FindResource("AccentStandBrush");
+        var emptyBrush = (Brush)FindResource("InputBrush");
+
+        ChartGrid.Children.Clear();
+        foreach (var (date, day) in week)
+        {
+            var bar = new System.Windows.Controls.StackPanel
+            {
+                VerticalAlignment = VerticalAlignment.Bottom,
+                Margin = new Thickness(5, 0, 5, 0)
+            };
+
+            double standH = day.StandSeconds * BarAreaHeight / maxDay;
+            double sitH = day.SitSeconds * BarAreaHeight / maxDay;
+
+            if (day.StandSeconds > 0)
+                bar.Children.Add(new System.Windows.Controls.Border
+                {
+                    Height = Math.Max(standH, 2),
+                    Background = standBrush,
+                    CornerRadius = new CornerRadius(2, 2, 0, 0)
+                });
+            if (day.SitSeconds > 0)
+                bar.Children.Add(new System.Windows.Controls.Border
+                {
+                    Height = Math.Max(sitH, 2),
+                    Background = sitBrush,
+                    CornerRadius = day.StandSeconds > 0
+                        ? new CornerRadius(0)
+                        : new CornerRadius(2, 2, 0, 0)
+                });
+            if (day.SitSeconds == 0 && day.StandSeconds == 0)
+                bar.Children.Add(new System.Windows.Controls.Border
+                {
+                    Height = 2,
+                    Background = emptyBrush
+                });
+
+            var barArea = new System.Windows.Controls.Grid { Height = BarAreaHeight };
+            barArea.Children.Add(bar);
+
+            var label = new System.Windows.Controls.TextBlock
+            {
+                Text = date.ToString("ddd", culture).TrimEnd('.'),
+                FontSize = 10,
+                Foreground = (Brush)FindResource("SubTextBrush"),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+
+            var cell = new System.Windows.Controls.StackPanel
+            {
+                ToolTip = $"{date:d.M.}  🪑 {FmtHours(day.SitSeconds)} · 🧍 {FmtHours(day.StandSeconds)}"
+            };
+            cell.Children.Add(barArea);
+            cell.Children.Add(label);
+            ChartGrid.Children.Add(cell);
+        }
+    }
+
+    private static string FmtHours(int seconds)
+    {
+        var t = TimeSpan.FromSeconds(seconds);
+        return $"{(int)t.TotalHours}:{t.Minutes:D2}";
+    }
 
     private void Gear_Click(object sender, RoutedEventArgs e) => SettingsRequested?.Invoke();
 

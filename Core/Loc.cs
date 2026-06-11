@@ -54,6 +54,7 @@ internal static class Loc
         ["StRemainStand"] = ("Zostáva {0} do státia", "{0} until standing"),
         ["StRemainSit"] = ("Zostáva {0} do sedenia", "{0} until sitting"),
         ["StSettingsTip"] = ("Nastavenia", "Settings"),
+        ["StStatsTitle"] = ("Posledných 7 dní", "Last 7 days"),
 
         // Settings window
         ["SetTitle"] = ("StandReminder – Nastavenia", "StandReminder – Settings"),

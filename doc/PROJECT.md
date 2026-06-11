@@ -56,6 +56,7 @@ pri presune súboru sa nemení kód). SDK-style csproj globuje súbory automatic
 | `Ui/UiNative.cs` | P/Invoke na `dwmapi.dll` (`DwmSetWindowAttribute`): `UseDarkTitleBar` (attr 20) a `UseRoundedCorners` (attr 33, Windows 11) pre zaoblené rohy popupov. |
 | `Ui/DarkMenuRenderer.cs` | Dark theme pre WinForms `ContextMenuStrip` tray menu — `ToolStripProfessionalRenderer` s vlastnou `ProfessionalColorTable`, zaoblený hover highlight, vlastné separátory. Farby zrkadlia WPF paletu. |
 | `Core/CrashLog.cs` | Crash logging + health check (pozri sekciu nižšie). |
+| `Core/Stats.cs` | Denná štatistika sedenia/státia → `%APPDATA%\StandReminder\stats.json`. História **max 7 kalendárnych dní** — `Prune()` pri každom load/save maže staršie záznamy, súbor nemôže rásť. Počíta sa v `Tick()` (1 tick = 1 s do aktuálnej fázy, len keď nie je pauza/Idle), flush na disk každých 60 s + pri ukončení (`OnExit`). Zobrazenie: sekcia v StatusWindow flyoute — dnešné súčty + stacked bar graf 7 dní (modrá sedenie dole, zelená státie hore, tooltip s detailom). |
 | `Core/Loc.cs` | Lokalizácia: statický slovník všetkých UI stringov ako dvojice `(sk, en)`, prístup cez `Loc.T(key)` / `Loc.F(key, args)`. `Loc.Lang` sa nastavuje z `AppSettings.Language` pri štarte a po uložení nastavení (vtedy sa volá aj `App.ApplyMenuLanguage()` na tray menu; okná si texty naplnia pri vytvorení). Žiadne .resx — pri pridávaní UI textu vždy pridaj kľúč do `Loc.cs`, nie literál do kódu/XAML. |
 | `Assets/app.ico` | Ikona aplikácie (exe, hlavička okna, taskbar) — zelený kruh so stojacou postavičkou, rovnaká geometria ako tray ikona. Zapojená cez `<ApplicationIcon>` v csproj. **Negeneruje sa pri builde** — pri zmene dizajnu ju treba pregenerovať skriptom `tools/generate-icon.ps1` a commitnúť. |
 | `tools/generate-icon.ps1` | PowerShell skript, ktorý nakreslí logo cez System.Drawing (veľkosti 16–256 px) a zloží ICO kontajner s PNG frame-ami. Spúšťa sa z koreňa repa: `powershell -File tools\generate-icon.ps1`. |
@@ -170,6 +171,20 @@ s vlastným slim scrollbarom v `Border.Resources` popupu). Pribudli brushe `Inpu
 
 ## Nápady na ďalší rozvoj (zatiaľ nerealizované)
 
-- Štatistiky: koľko času denne prestojím/presedím
 - Auto-dismiss pripomienky po X minútach + detekcia nečinnosti (používateľ nie je pri PC)
 - Vlastné zvuky, voľba dňa v týždni (víkendy)
+
+## Prompt na pokračovanie práce
+
+Novú konverzáciu s AI asistentom začni skopírovaním tohto promptu (a doplň úlohu):
+
+```text
+Pracujem na projekte StandReminder (Windows tray app, sit/stand pripomienky).
+Najprv si prečítaj dokumentáciu doc/PROJECT.md a riaď sa ňou — obsahuje
+architektúru, konvencie (lokalizácia cez Core/Loc.cs, dizajnové tokeny,
+štruktúru priečinkov), build/publish príkazy aj známe pasce.
+Po každej významnej zmene dokumentáciu aktualizuj.
+Aplikácia mi po úprave vždy nasaď a spusti (postup je v dokumentácii).
+
+Úloha: <sem napíš, čo ideme dorobiť>
+```

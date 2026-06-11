@@ -17,6 +17,9 @@ public partial class App : System.Windows.Application
     private DispatcherTimer _timer = null!;
     private AppSettings _settings = null!;
 
+    private Stats _stats = null!;
+    private DateTime _lastStatsSave;
+
     private Phase _phase = Phase.Idle;
     private DateTime _phaseStart;
     private DateTime _phaseEnd;
@@ -52,6 +55,8 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         CrashLog.Install(this);
         _watchdogInstalled = true;
+        _stats = Stats.Load();
+        _lastStatsSave = DateTime.Now;
 
         _iconSit = CreateSitIcon();
         _iconStand = CreateStandIcon();
@@ -211,6 +216,17 @@ public partial class App : System.Windows.Application
             {
                 ShowReminder(_phase == Phase.Sitting ? Phase.Standing : Phase.Sitting);
             }
+
+            // statistics: one tick = one second in the current position
+            if (_phase != Phase.Idle)
+            {
+                _stats.Add(_phase, 1);
+                if ((now - _lastStatsSave).TotalSeconds >= 60)
+                {
+                    _stats.Save();
+                    _lastStatsSave = now;
+                }
+            }
         }
 
         UpdateTray();
@@ -342,7 +358,7 @@ public partial class App : System.Windows.Application
         var total = _phaseEnd - _phaseStart;
         double fraction = total.TotalSeconds > 0 ? elapsed.TotalSeconds / total.TotalSeconds : 0;
 
-        _status.UpdateView(_phase, _paused, elapsed, remaining, fraction, _settings);
+        _status.UpdateView(_phase, _paused, elapsed, remaining, fraction, _settings, _stats);
     }
 
     // ---------- Settings ----------
@@ -399,7 +415,10 @@ public partial class App : System.Windows.Application
     protected override void OnExit(System.Windows.ExitEventArgs e)
     {
         if (_watchdogInstalled)
+        {
+            _stats?.Save();
             CrashLog.MarkCleanExit(); // covers Ukončiť as well as Windows logoff/shutdown
+        }
         base.OnExit(e);
     }
 }

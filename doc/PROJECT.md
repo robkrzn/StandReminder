@@ -95,6 +95,12 @@ Tray menu je tmavé (`DarkMenuRenderer`) a má zaoblené rohy cez DWM
 Popupy: `WindowStyle=None`, `AllowsTransparency`, `CornerRadius` 14–16, `DropShadowEffect`,
 fade-in animácia, pozícia pravý dolný roh `SystemParameters.WorkArea`.
 
+Ovládacie prvky majú **vlastné ControlTemplates v App.xaml** (defaultné WPF vyzerali zastaralo):
+`DarkSlider` (akcentová výplň + ring thumb à la Win11), `DarkCheckBox` (zaoblený box,
+akcent pri zaškrtnutí), `DarkCombo` (zaoblené pole, otočná šípka, tmavý zaoblený dropdown
+s vlastným slim scrollbarom v `Border.Resources` popupu). Pribudli brushe `InputBrush`
+`#2A2F3F` (polia) a `HoverBrush` `#323848` (hover stavy).
+
 ## Nastavenia (settings.json)
 
 ```json

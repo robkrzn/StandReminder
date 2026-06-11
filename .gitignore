@@ -1,0 +1,14 @@
+# Build outputs
+bin/
+obj/
+publish/
+
+# IDE / tooling
+.vs/
+.vscode/
+*.user
+*.suo
+
+# OS junk
+Thumbs.db
+Desktop.ini

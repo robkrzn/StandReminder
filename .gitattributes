@@ -1,0 +1,12 @@
+# Normalize line endings
+* text=auto
+
+*.cs text diff=csharp
+*.xaml text
+*.csproj text
+*.md text
+
+*.exe binary
+*.dll binary
+*.ico binary
+*.png binary

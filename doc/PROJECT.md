@@ -25,9 +25,15 @@ intervaly sú 45 min sedenie / 15 min státie.
 
 ```powershell
 dotnet build -c Release
-# distribučný single-file exe (vyžaduje .NET 10 runtime na cieľovom PC):
-dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish
+# distribučný single-file exe (vyžaduje .NET 10 Desktop Runtime na cieľovom PC, ~220 KB):
+dotnet publish -c Release -r win-x64 -p:PublishSingleFile=true -p:SelfContained=false -o publish
+# standalone exe bez nutnosti runtime (~75 MB):
+dotnet publish -c Release -r win-x64 -p:PublishSingleFile=true -p:SelfContained=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist/sc
 ```
+
+**Pozor:** `--self-contained false` (CLI tvar) v kombinácii s `-p:PublishSingleFile=true`
+SDK ignoruje a potichu pribalí celý runtime (~165 MB exe). Vždy používaj MSBuild tvar
+`-p:SelfContained=false`.
 
 Výstup: `publish/StandReminder.exe`. Pred republish treba ukončiť bežiacu inštanciu
 (`Stop-Process -Name StandReminder`), inak je exe zamknutý.

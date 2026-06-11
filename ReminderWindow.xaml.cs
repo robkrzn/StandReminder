@@ -18,18 +18,18 @@ public partial class ReminderWindow : Window
         {
             EmojiText.Text = "🧍";
             EmojiBadge.Background = new SolidColorBrush(Color.FromArgb(40, 0x46, 0xC2, 0x8E));
-            TitleText.Text = "Čas postaviť sa!";
-            SubtitleText.Text = $"Zdvihni stôl a pracuj v stoji ďalších {settings.StandMinutes} minút.";
-            AcceptButton.Content = "Stojím ✓";
+            TitleText.Text = Loc.T("RemTitleStand");
+            SubtitleText.Text = Loc.F("RemBodyStand", settings.StandMinutes);
+            AcceptButton.Content = Loc.T("RemBtnStand");
             AcceptButton.Background = (Brush)FindResource("AccentStandBrush");
         }
         else
         {
             EmojiText.Text = "🪑";
             EmojiBadge.Background = new SolidColorBrush(Color.FromArgb(40, 0x5B, 0x8D, 0xEF));
-            TitleText.Text = "Môžeš si sadnúť";
-            SubtitleText.Text = $"Spusti stôl a pohodlne si sadni na {settings.SitMinutes} minút.";
-            AcceptButton.Content = "Sedím ✓";
+            TitleText.Text = Loc.T("RemTitleSit");
+            SubtitleText.Text = Loc.F("RemBodySit", settings.SitMinutes);
+            AcceptButton.Content = Loc.T("RemBtnSit");
             AcceptButton.Background = (Brush)FindResource("AccentSitBrush");
         }
 

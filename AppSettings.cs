@@ -11,6 +11,7 @@ public class AppSettings
     public string WorkEnd { get; set; } = "16:00";
     public bool PlaySound { get; set; } = true;
     public bool StartWithWindows { get; set; } = false;
+    public string Language { get; set; } = "sk"; // "sk" | "en"
 
     public TimeSpan WorkStartTime => TimeSpan.TryParse(WorkStart, out var t) ? t : new TimeSpan(7, 0, 0);
     public TimeSpan WorkEndTime => TimeSpan.TryParse(WorkEnd, out var t) ? t : new TimeSpan(16, 0, 0);

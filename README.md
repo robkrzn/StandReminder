@@ -2,7 +2,7 @@
 
 A lightweight Windows system tray app that reminds you to alternate between **sitting and standing** at a height-adjustable desk during your work hours.
 
-> UI language is Slovak. Built with WPF / .NET 10, no external dependencies.
+> UI available in Slovak and English (switchable in settings). Built with WPF / .NET 10, no external dependencies.
 
 ## Features
 
@@ -11,7 +11,7 @@ A lightweight Windows system tray app that reminds you to alternate between **si
 - 🔔 Non-intrusive dark popup in the bottom-right corner when it's time to switch, with a **+5 min snooze** — it never steals keyboard focus
 - 📊 Tray flyout (left-click the icon): current position, elapsed time, progress bar, time remaining
 - 🎨 Tray icon shows your current position at a glance — blue sitting figure, green standing figure, gray when paused or outside work hours
-- ⚙️ Settings: intervals, work hours, sound, start with Windows
+- ⚙️ Settings: intervals, work hours, sound, start with Windows, language (Slovak / English)
 - 🩺 Crash log + health check in `%APPDATA%\StandReminder\crash.log`
 
 ## Getting started

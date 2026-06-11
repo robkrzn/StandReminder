@@ -9,13 +9,13 @@
 
     <StackPanel Margin="28,24,28,24">
 
-        <TextBlock Text="⚙️  Nastavenia" FontSize="20" FontWeight="Bold"
+        <TextBlock x:Name="HeaderText" FontSize="20" FontWeight="Bold"
                    Foreground="{StaticResource TextBrush}" Margin="0,0,0,18"/>
 
         <!-- Intervals card -->
         <Border Background="{StaticResource CardBrush}" CornerRadius="12" Padding="18" Margin="0,0,0,14">
             <StackPanel>
-                <TextBlock Text="Intervaly zmeny pozície" FontSize="14" FontWeight="SemiBold"
+                <TextBlock x:Name="IntervalsHeader" FontSize="14" FontWeight="SemiBold"
                            Foreground="{StaticResource TextBrush}" Margin="0,0,0,12"/>
 
                 <TextBlock x:Name="SitLabel" FontSize="13" Foreground="{StaticResource SubTextBrush}"/>
@@ -28,7 +28,7 @@
                         Minimum="5" Maximum="60" TickFrequency="5"
                         ValueChanged="Sliders_ValueChanged" Margin="0,4,0,4"/>
 
-                <TextBlock Text="Odporúčaný pomer sedenie : státie je 2:1 až 3:1."
+                <TextBlock x:Name="RatioHint"
                            FontSize="11" Foreground="{StaticResource SubTextBrush}"
                            Opacity="0.7" Margin="0,8,0,0" TextWrapping="Wrap"/>
             </StackPanel>
@@ -37,17 +37,17 @@
         <!-- Work hours card -->
         <Border Background="{StaticResource CardBrush}" CornerRadius="12" Padding="18" Margin="0,0,0,14">
             <StackPanel>
-                <TextBlock Text="Pracovný čas" FontSize="14" FontWeight="SemiBold"
+                <TextBlock x:Name="WorkHoursHeader" FontSize="14" FontWeight="SemiBold"
                            Foreground="{StaticResource TextBrush}" Margin="0,0,0,12"/>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Od" FontSize="13" Foreground="{StaticResource SubTextBrush}"
+                    <TextBlock x:Name="FromLabel" FontSize="13" Foreground="{StaticResource SubTextBrush}"
                                VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <ComboBox x:Name="StartCombo" Style="{StaticResource DarkCombo}"/>
-                    <TextBlock Text="do" FontSize="13" Foreground="{StaticResource SubTextBrush}"
+                    <TextBlock x:Name="ToLabel" FontSize="13" Foreground="{StaticResource SubTextBrush}"
                                VerticalAlignment="Center" Margin="16,0,8,0"/>
                     <ComboBox x:Name="EndCombo" Style="{StaticResource DarkCombo}"/>
                 </StackPanel>
-                <TextBlock Text="Mimo tohto času aplikácia nepripomína."
+                <TextBlock x:Name="WorkHint"
                            FontSize="11" Foreground="{StaticResource SubTextBrush}"
                            Opacity="0.7" Margin="0,8,0,0"/>
             </StackPanel>
@@ -57,9 +57,14 @@
         <Border Background="{StaticResource CardBrush}" CornerRadius="12" Padding="18" Margin="0,0,0,20">
             <StackPanel>
                 <CheckBox x:Name="SoundCheck" Style="{StaticResource DarkCheckBox}"
-                          Content="Zvukové upozornenie" Margin="0,0,0,8"/>
-                <CheckBox x:Name="AutostartCheck" Style="{StaticResource DarkCheckBox}"
-                          Content="Spustiť automaticky pri štarte Windows"/>
+                          Margin="0,0,0,8"/>
+                <CheckBox x:Name="AutostartCheck" Style="{StaticResource DarkCheckBox}"/>
+                <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                    <TextBlock x:Name="LangLabel" FontSize="13"
+                               Foreground="{StaticResource SubTextBrush}"
+                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <ComboBox x:Name="LangCombo" Style="{StaticResource DarkCombo}"/>
+                </StackPanel>
             </StackPanel>
         </Border>
 
@@ -69,9 +74,9 @@
                 <ColumnDefinition Width="12"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Style="{StaticResource PrimaryButton}" Content="Uložiť"
+            <Button x:Name="SaveButton" Grid.Column="0" Style="{StaticResource PrimaryButton}"
                     Background="{StaticResource AccentSitBrush}" Click="Save_Click"/>
-            <Button Grid.Column="2" Style="{StaticResource GhostButton}" Content="Zrušiť"
+            <Button x:Name="CancelButton" Grid.Column="2" Style="{StaticResource GhostButton}"
                     Click="Cancel_Click"/>
         </Grid>
 

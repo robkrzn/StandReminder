@@ -31,13 +31,19 @@ public partial class App : System.Windows.Application
 
     private WinForms.ToolStripMenuItem _miStatus = null!;
     private WinForms.ToolStripMenuItem _miPause = null!;
+    private WinForms.ToolStripMenuItem _miSwitch = null!;
+    private WinForms.ToolStripMenuItem _miSettings = null!;
+    private WinForms.ToolStripMenuItem _miExit = null!;
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        _settings = AppSettings.Load();
+        Loc.Lang = _settings.Language;
+
         _mutex = new Mutex(true, "StandReminder_SingleInstance", out bool isNew);
         if (!isNew)
         {
-            MessageBox.Show("StandReminder už beží (pozri systémovú lištu).", "StandReminder",
+            MessageBox.Show(Loc.T("AlreadyRunning"), "StandReminder",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             Shutdown();
             return;
@@ -46,7 +52,6 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         CrashLog.Install(this);
         _watchdogInstalled = true;
-        _settings = AppSettings.Load();
 
         _iconSit = CreateSitIcon();
         _iconStand = CreateStandIcon();
@@ -80,23 +85,25 @@ public partial class App : System.Windows.Application
         menu.Items.Add(_miStatus);
         menu.Items.Add(new WinForms.ToolStripSeparator());
 
-        var miSwitch = new WinForms.ToolStripMenuItem("Zmeniť pozíciu teraz");
-        miSwitch.Click += (_, _) => SwitchNow();
-        menu.Items.Add(miSwitch);
+        _miSwitch = new WinForms.ToolStripMenuItem();
+        _miSwitch.Click += (_, _) => SwitchNow();
+        menu.Items.Add(_miSwitch);
 
-        _miPause = new WinForms.ToolStripMenuItem("Pozastaviť pripomienky");
+        _miPause = new WinForms.ToolStripMenuItem();
         _miPause.Click += (_, _) => TogglePause();
         menu.Items.Add(_miPause);
 
-        var miSettings = new WinForms.ToolStripMenuItem("Nastavenia…");
-        miSettings.Click += (_, _) => OpenSettings();
-        menu.Items.Add(miSettings);
+        _miSettings = new WinForms.ToolStripMenuItem();
+        _miSettings.Click += (_, _) => OpenSettings();
+        menu.Items.Add(_miSettings);
 
         menu.Items.Add(new WinForms.ToolStripSeparator());
 
-        var miExit = new WinForms.ToolStripMenuItem("Ukončiť");
-        miExit.Click += (_, _) => ExitApp();
-        menu.Items.Add(miExit);
+        _miExit = new WinForms.ToolStripMenuItem();
+        _miExit.Click += (_, _) => ExitApp();
+        menu.Items.Add(_miExit);
+
+        ApplyMenuLanguage();
 
         foreach (WinForms.ToolStripItem item in menu.Items)
             item.Padding = new WinForms.Padding(2, 4, 2, 4);
@@ -113,6 +120,14 @@ public partial class App : System.Windows.Application
             if (e.Button == WinForms.MouseButtons.Left)
                 ToggleStatus();
         };
+    }
+
+    private void ApplyMenuLanguage()
+    {
+        _miSwitch.Text = Loc.T("MenuSwitchNow");
+        _miPause.Text = Loc.T(_paused ? "MenuResume" : "MenuPause");
+        _miSettings.Text = Loc.T("MenuSettings");
+        _miExit.Text = Loc.T("MenuExit");
     }
 
     /// <summary>Colored circle background with a white pictogram drawn on top.</summary>
@@ -224,7 +239,7 @@ public partial class App : System.Windows.Application
     private void TogglePause()
     {
         _paused = !_paused;
-        _miPause.Text = _paused ? "Pokračovať v pripomienkach" : "Pozastaviť pripomienky";
+        _miPause.Text = Loc.T(_paused ? "MenuResume" : "MenuPause");
         if (_paused)
             CloseReminder();
         else if (_phase != Phase.Idle)
@@ -266,19 +281,18 @@ public partial class App : System.Windows.Application
         if (_paused)
         {
             icon = _iconIdle;
-            text = "⏸ Pozastavené";
+            text = Loc.T("TrayPaused");
         }
         else if (_phase == Phase.Idle)
         {
             icon = _iconIdle;
-            text = $"Mimo prac. času ({_settings.WorkStart}–{_settings.WorkEnd})";
+            text = Loc.F("TrayIdle", _settings.WorkStart, _settings.WorkEnd);
         }
         else
         {
             var remaining = _phaseEnd - DateTime.Now;
             if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
-            string pos = _phase == Phase.Sitting ? "🪑 Sedíš" : "🧍 Stojíš";
-            text = $"{pos} – zostáva {remaining:mm\\:ss}";
+            text = Loc.F(_phase == Phase.Sitting ? "TraySitting" : "TrayStanding", $"{remaining:mm\\:ss}");
             icon = _phase == Phase.Sitting ? _iconSit : _iconStand;
         }
 
@@ -347,6 +361,8 @@ public partial class App : System.Windows.Application
         _settingsWindow.Saved += () =>
         {
             _settings.Save();
+            Loc.Lang = _settings.Language;
+            ApplyMenuLanguage();
             ApplyAutostart(_settings.StartWithWindows);
             if (_phase != Phase.Idle && !_paused)
                 StartPhase(_phase); // re-apply new interval to the current phase

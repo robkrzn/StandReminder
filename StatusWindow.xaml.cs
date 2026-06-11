@@ -13,6 +13,8 @@ public partial class StatusWindow : Window
     public StatusWindow()
     {
         InitializeComponent();
+        SwitchButton.Content = Loc.T("MenuSwitchNow");
+        GearButton.ToolTip = Loc.T("StSettingsTip");
         Loaded += (_, _) => PositionBottomRight();
         Deactivated += (_, _) => CloseSafe(); // behave like a tray flyout
     }
@@ -48,8 +50,8 @@ public partial class StatusWindow : Window
         if (paused)
         {
             EmojiText.Text = "⏸";
-            StateText.Text = "Pozastavené";
-            ElapsedText.Text = "Pripomienky sú vypnuté";
+            StateText.Text = Loc.T("StPaused");
+            ElapsedText.Text = Loc.T("StPausedSub");
             ProgressPanel.Visibility = Visibility.Collapsed;
             SwitchButton.Visibility = Visibility.Collapsed;
             return;
@@ -58,8 +60,8 @@ public partial class StatusWindow : Window
         if (phase == Phase.Idle)
         {
             EmojiText.Text = "🌙";
-            StateText.Text = "Mimo pracovného času";
-            ElapsedText.Text = $"Pripomínam medzi {settings.WorkStart} a {settings.WorkEnd}";
+            StateText.Text = Loc.T("StIdle");
+            ElapsedText.Text = Loc.F("StIdleSub", settings.WorkStart, settings.WorkEnd);
             ProgressPanel.Visibility = Visibility.Collapsed;
             SwitchButton.Visibility = Visibility.Collapsed;
             return;
@@ -67,16 +69,16 @@ public partial class StatusWindow : Window
 
         bool sitting = phase == Phase.Sitting;
         EmojiText.Text = sitting ? "🪑" : "🧍";
-        StateText.Text = sitting ? "Sedíš" : "Stojíš";
-        ElapsedText.Text = $"V tejto pozícii už {Fmt(elapsed)}";
+        StateText.Text = Loc.T(sitting ? "StSitting" : "StStanding");
+        ElapsedText.Text = Loc.F("StElapsed", Fmt(elapsed));
 
         ProgressPanel.Visibility = Visibility.Visible;
         SwitchButton.Visibility = Visibility.Visible;
 
         if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
         RemainingText.Text = remaining == TimeSpan.Zero
-            ? (sitting ? "Čas postaviť sa!" : "Môžeš si sadnúť")
-            : $"Zostáva {Fmt(remaining)} {(sitting ? "do státia" : "do sedenia")}";
+            ? Loc.T(sitting ? "StTimeToStand" : "StTimeToSit")
+            : Loc.F(sitting ? "StRemainStand" : "StRemainSit", Fmt(remaining));
 
         Fill.Background = (Brush)FindResource(sitting ? "AccentSitBrush" : "AccentStandBrush");
         fraction = Math.Clamp(fraction, 0, 1);

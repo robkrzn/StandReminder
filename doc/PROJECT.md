@@ -7,7 +7,7 @@
 
 Windows tray aplikácia, ktorá v pracovnom čase pripomína striedanie sedenia a státia
 pri výškovo nastaviteľnom stole. Beží na pozadí v systémovej lište, žiadne hlavné okno.
-Celá UI je v slovenčine.
+UI je dvojjazyčná — slovenčina (default) a angličtina, prepína sa v nastaveniach.
 
 **Používateľ:** jeden konkrétny používateľ, aplikácia beží len v práci (pracovný čas
 predvolene 07:00–16:00). Odporúčaný pomer sedenie : státie je 2:1 až 3:1 — predvolené
@@ -45,6 +45,7 @@ Výstup: `publish/StandReminder.exe`. Pred republish treba ukončiť bežiacu in
 | `UiNative.cs` | P/Invoke na `dwmapi.dll` (`DwmSetWindowAttribute`): `UseDarkTitleBar` (attr 20) a `UseRoundedCorners` (attr 33, Windows 11) pre zaoblené rohy popupov. |
 | `DarkMenuRenderer.cs` | Dark theme pre WinForms `ContextMenuStrip` tray menu — `ToolStripProfessionalRenderer` s vlastnou `ProfessionalColorTable`, zaoblený hover highlight, vlastné separátory. Farby zrkadlia WPF paletu. |
 | `CrashLog.cs` | Crash logging + health check (pozri sekciu nižšie). |
+| `Loc.cs` | Lokalizácia: statický slovník všetkých UI stringov ako dvojice `(sk, en)`, prístup cez `Loc.T(key)` / `Loc.F(key, args)`. `Loc.Lang` sa nastavuje z `AppSettings.Language` pri štarte a po uložení nastavení (vtedy sa volá aj `App.ApplyMenuLanguage()` na tray menu; okná si texty naplnia pri vytvorení). Žiadne .resx — pri pridávaní UI textu vždy pridaj kľúč do `Loc.cs`, nie literál do kódu/XAML. |
 
 ## Stavový automat (App.xaml.cs)
 
@@ -103,7 +104,8 @@ fade-in animácia, pozícia pravý dolný roh `SystemParameters.WorkArea`.
   "WorkStart": "07:00",
   "WorkEnd": "16:00",
   "PlaySound": true,
-  "StartWithWindows": false
+  "StartWithWindows": false,
+  "Language": "sk"
 }
 ```
 

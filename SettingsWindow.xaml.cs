@@ -33,8 +33,30 @@ public partial class SettingsWindow : Window
         SoundCheck.IsChecked = _settings.PlaySound;
         AutostartCheck.IsChecked = _settings.StartWithWindows;
 
+        LangCombo.Items.Add("Slovenčina");
+        LangCombo.Items.Add("English");
+        LangCombo.SelectedIndex = _settings.Language == "en" ? 1 : 0;
+
+        ApplyTexts();
         _loaded = true;
         UpdateLabels();
+    }
+
+    private void ApplyTexts()
+    {
+        Title = Loc.T("SetTitle");
+        HeaderText.Text = Loc.T("SetHeader");
+        IntervalsHeader.Text = Loc.T("SetIntervals");
+        RatioHint.Text = Loc.T("SetRatioHint");
+        WorkHoursHeader.Text = Loc.T("SetWorkHours");
+        FromLabel.Text = Loc.T("SetFrom");
+        ToLabel.Text = Loc.T("SetTo");
+        WorkHint.Text = Loc.T("SetWorkHint");
+        SoundCheck.Content = Loc.T("SetSound");
+        AutostartCheck.Content = Loc.T("SetAutostart");
+        LangLabel.Text = Loc.T("SetLanguage");
+        SaveButton.Content = Loc.T("SetSave");
+        CancelButton.Content = Loc.T("SetCancel");
     }
 
     private void Sliders_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -44,8 +66,8 @@ public partial class SettingsWindow : Window
 
     private void UpdateLabels()
     {
-        SitLabel.Text = $"🪑  Sedenie: {(int)SitSlider.Value} min";
-        StandLabel.Text = $"🧍  Státie: {(int)StandSlider.Value} min";
+        SitLabel.Text = Loc.F("SetSitLabel", (int)SitSlider.Value);
+        StandLabel.Text = Loc.F("SetStandLabel", (int)StandSlider.Value);
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)
@@ -55,7 +77,7 @@ public partial class SettingsWindow : Window
 
         if (TimeSpan.Parse(end) <= TimeSpan.Parse(start))
         {
-            MessageBox.Show("Koniec pracovného času musí byť neskôr ako začiatok.",
+            MessageBox.Show(Loc.T("SetValidation"),
                 "StandReminder", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -66,6 +88,7 @@ public partial class SettingsWindow : Window
         _settings.WorkEnd = end;
         _settings.PlaySound = SoundCheck.IsChecked == true;
         _settings.StartWithWindows = AutostartCheck.IsChecked == true;
+        _settings.Language = LangCombo.SelectedIndex == 1 ? "en" : "sk";
 
         Saved?.Invoke();
         Close();

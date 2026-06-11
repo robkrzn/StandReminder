@@ -128,6 +128,11 @@ s vlastným slim scrollbarom v `Border.Resources` popupu). Pribudli brushe `Inpu
 ## Crash log a health check (CrashLog.cs)
 
 - Log: `%APPDATA%\StandReminder\crash.log` — appenduje sa, formát `[timestamp] LEVEL správa` + stack trace
+- **Rotácia:** pri prekročení 512 KB sa log presunie do `crash.old.log` (prepíše predošlú zálohu)
+  a začne sa nový — celková spotreba disku je ohraničená na ~1 MB
+- **Anti-spam:** identický záznam (level + správa + typ výnimky) sa v rámci minúty zapíše len raz;
+  pri ďalšom odlišnom zázname sa doplní riadok „Predchádzajúci záznam sa opakoval ešte N×".
+  Chráni pred chybou opakujúcou sa v 1 s ticku (86 400 záznamov/deň → ~1 440/deň)
 - `CrashLog.Install(app)` sa volá v `OnStartup` (len primárna inštancia — po mutex checku):
   - `DispatcherUnhandledException` → zaloguje **ERROR** a nastaví `Handled = true`, takže
     výnimky na UI vlákne aplikáciu **nezhodia**, len sa zapíšu

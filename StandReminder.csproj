@@ -10,6 +10,7 @@
     <AssemblyName>StandReminder</AssemblyName>
     <RootNamespace>StandReminder</RootNamespace>
     <Version>1.0.1</Version>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

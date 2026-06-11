@@ -57,7 +57,7 @@ internal static class Loc
 
         // Settings window
         ["SetTitle"] = ("StandReminder – Nastavenia", "StandReminder – Settings"),
-        ["SetHeader"] = ("⚙️  Nastavenia", "⚙️  Settings"),
+        ["SetHeader"] = ("Nastavenia", "Settings"),
         ["SetIntervals"] = ("Intervaly zmeny pozície", "Position change intervals"),
         ["SetSitLabel"] = ("🪑  Sedenie: {0} min", "🪑  Sitting: {0} min"),
         ["SetStandLabel"] = ("🧍  Státie: {0} min", "🧍  Standing: {0} min"),

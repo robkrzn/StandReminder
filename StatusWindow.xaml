@@ -36,7 +36,7 @@
                 <Button x:Name="GearButton" Grid.Column="1" Style="{StaticResource GhostButton}"
                         Padding="8,6" VerticalAlignment="Top" Click="Gear_Click"
                         ToolTip="Nastavenia">
-                    <TextBlock Text="⚙" FontSize="15" FontFamily="Segoe UI Emoji"/>
+                    <TextBlock Text="&#xE713;" FontSize="14" FontFamily="Segoe Fluent Icons"/>
                 </Button>
             </Grid>
 

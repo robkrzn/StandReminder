@@ -52,6 +52,8 @@ Výstup: `publish/StandReminder.exe`. Pred republish treba ukončiť bežiacu in
 | `DarkMenuRenderer.cs` | Dark theme pre WinForms `ContextMenuStrip` tray menu — `ToolStripProfessionalRenderer` s vlastnou `ProfessionalColorTable`, zaoblený hover highlight, vlastné separátory. Farby zrkadlia WPF paletu. |
 | `CrashLog.cs` | Crash logging + health check (pozri sekciu nižšie). |
 | `Loc.cs` | Lokalizácia: statický slovník všetkých UI stringov ako dvojice `(sk, en)`, prístup cez `Loc.T(key)` / `Loc.F(key, args)`. `Loc.Lang` sa nastavuje z `AppSettings.Language` pri štarte a po uložení nastavení (vtedy sa volá aj `App.ApplyMenuLanguage()` na tray menu; okná si texty naplnia pri vytvorení). Žiadne .resx — pri pridávaní UI textu vždy pridaj kľúč do `Loc.cs`, nie literál do kódu/XAML. |
+| `Assets/app.ico` | Ikona aplikácie (exe, hlavička okna, taskbar) — zelený kruh so stojacou postavičkou, rovnaká geometria ako tray ikona. Zapojená cez `<ApplicationIcon>` v csproj. **Negeneruje sa pri builde** — pri zmene dizajnu ju treba pregenerovať skriptom `tools/generate-icon.ps1` a commitnúť. |
+| `tools/generate-icon.ps1` | PowerShell skript, ktorý nakreslí logo cez System.Drawing (veľkosti 16–256 px) a zloží ICO kontajner s PNG frame-ami. Spúšťa sa z koreňa repa: `powershell -File tools\generate-icon.ps1`. |
 
 ## Stavový automat (App.xaml.cs)
 

@@ -40,18 +40,23 @@ Výstup: `publish/StandReminder.exe`. Pred republish treba ukončiť bežiacu in
 
 ## Architektúra a súbory
 
+Štruktúra priečinkov: `Views/` = okná (XAML + code-behind), `Core/` = logika bez UI,
+`Ui/` = vizuálne pomocné triedy, root = len vstupný bod (`App.xaml`). Všetky súbory
+zdieľajú jeden namespace `StandReminder` (zámerné — malá app, žiadne sub-namespaces;
+pri presune súboru sa nemení kód). SDK-style csproj globuje súbory automaticky.
+
 | Súbor | Zodpovednosť |
 |---|---|
 | `App.xaml` | Globálne resources: farebná paleta, štýly `PrimaryButton`, `GhostButton`, `DarkSlider`, `DarkCheckBox`, `DarkCombo`. `ShutdownMode=OnExplicitShutdown`, žiadne StartupUri. |
 | `App.xaml.cs` | **Jadro aplikácie.** Tray ikona + kontextové menu, stavový automat fáz, `DispatcherTimer` (1 s tick), kreslenie tray ikon cez GDI+, autostart cez registry, single-instance mutex (`StandReminder_SingleInstance`). |
-| `AppSettings.cs` | Model nastavení + JSON load/save do `%APPDATA%\StandReminder\settings.json`. |
-| `ReminderWindow.xaml(.cs)` | Popup notifikácia pri zmene fázy (pravý dolný roh, `Topmost`, `ShowActivated=False` — nekradne fokus). Tlačidlá: potvrdiť zmenu / `+5 min` snooze. Eventy `Accepted`, `Snoozed`. |
-| `StatusWindow.xaml(.cs)` | Flyout po **ľavom kliku** na tray ikonu: aktuálna pozícia, uplynutý čas, progress bar, zostávajúci čas, tlačidlo ⚙ (nastavenia) a „Zmeniť pozíciu teraz". Zavrie sa pri `Deactivated`. Eventy `SettingsRequested`, `SwitchRequested`. |
-| `SettingsWindow.xaml(.cs)` | Okno nastavení: slidery intervalov (sedenie 10–120 min, státie 5–60 min), pracovný čas (ComboBoxy 05:00–21:30 po 30 min), zvuk, autostart. Event `Saved`. Tmavý title bar cez `UiNative.UseDarkTitleBar` (volané v `SourceInitialized`). |
-| `UiNative.cs` | P/Invoke na `dwmapi.dll` (`DwmSetWindowAttribute`): `UseDarkTitleBar` (attr 20) a `UseRoundedCorners` (attr 33, Windows 11) pre zaoblené rohy popupov. |
-| `DarkMenuRenderer.cs` | Dark theme pre WinForms `ContextMenuStrip` tray menu — `ToolStripProfessionalRenderer` s vlastnou `ProfessionalColorTable`, zaoblený hover highlight, vlastné separátory. Farby zrkadlia WPF paletu. |
-| `CrashLog.cs` | Crash logging + health check (pozri sekciu nižšie). |
-| `Loc.cs` | Lokalizácia: statický slovník všetkých UI stringov ako dvojice `(sk, en)`, prístup cez `Loc.T(key)` / `Loc.F(key, args)`. `Loc.Lang` sa nastavuje z `AppSettings.Language` pri štarte a po uložení nastavení (vtedy sa volá aj `App.ApplyMenuLanguage()` na tray menu; okná si texty naplnia pri vytvorení). Žiadne .resx — pri pridávaní UI textu vždy pridaj kľúč do `Loc.cs`, nie literál do kódu/XAML. |
+| `Core/AppSettings.cs` | Model nastavení + JSON load/save do `%APPDATA%\StandReminder\settings.json`. |
+| `Views/ReminderWindow.xaml(.cs)` | Popup notifikácia pri zmene fázy (pravý dolný roh, `Topmost`, `ShowActivated=False` — nekradne fokus). Tlačidlá: potvrdiť zmenu / `+5 min` snooze. Eventy `Accepted`, `Snoozed`. |
+| `Views/StatusWindow.xaml(.cs)` | Flyout po **ľavom kliku** na tray ikonu: aktuálna pozícia, uplynutý čas, progress bar, zostávajúci čas, tlačidlo ⚙ (nastavenia) a „Zmeniť pozíciu teraz". Zavrie sa pri `Deactivated`. Eventy `SettingsRequested`, `SwitchRequested`. |
+| `Views/SettingsWindow.xaml(.cs)` | Okno nastavení: slidery intervalov (sedenie 10–120 min, státie 5–60 min), pracovný čas (ComboBoxy 05:00–21:30 po 30 min), zvuk, autostart. Event `Saved`. Tmavý title bar cez `UiNative.UseDarkTitleBar` (volané v `SourceInitialized`). |
+| `Ui/UiNative.cs` | P/Invoke na `dwmapi.dll` (`DwmSetWindowAttribute`): `UseDarkTitleBar` (attr 20) a `UseRoundedCorners` (attr 33, Windows 11) pre zaoblené rohy popupov. |
+| `Ui/DarkMenuRenderer.cs` | Dark theme pre WinForms `ContextMenuStrip` tray menu — `ToolStripProfessionalRenderer` s vlastnou `ProfessionalColorTable`, zaoblený hover highlight, vlastné separátory. Farby zrkadlia WPF paletu. |
+| `Core/CrashLog.cs` | Crash logging + health check (pozri sekciu nižšie). |
+| `Core/Loc.cs` | Lokalizácia: statický slovník všetkých UI stringov ako dvojice `(sk, en)`, prístup cez `Loc.T(key)` / `Loc.F(key, args)`. `Loc.Lang` sa nastavuje z `AppSettings.Language` pri štarte a po uložení nastavení (vtedy sa volá aj `App.ApplyMenuLanguage()` na tray menu; okná si texty naplnia pri vytvorení). Žiadne .resx — pri pridávaní UI textu vždy pridaj kľúč do `Loc.cs`, nie literál do kódu/XAML. |
 | `Assets/app.ico` | Ikona aplikácie (exe, hlavička okna, taskbar) — zelený kruh so stojacou postavičkou, rovnaká geometria ako tray ikona. Zapojená cez `<ApplicationIcon>` v csproj. **Negeneruje sa pri builde** — pri zmene dizajnu ju treba pregenerovať skriptom `tools/generate-icon.ps1` a commitnúť. |
 | `tools/generate-icon.ps1` | PowerShell skript, ktorý nakreslí logo cez System.Drawing (veľkosti 16–256 px) a zloží ICO kontajner s PNG frame-ami. Spúšťa sa z koreňa repa: `powershell -File tools\generate-icon.ps1`. |
 

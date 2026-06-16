@@ -551,6 +551,11 @@ public partial class App : System.Windows.Application
             // the detached updater is now waiting for us to exit so it can swap the exe
             ExitApp();
         }
+        catch (UpdateVerificationException ex)
+        {
+            CrashLog.Write("ERROR", "Overenie aktualizácie zlyhalo (checksum/host)", ex);
+            window.ShowError(Loc.T("UpdVerifyFailed"));
+        }
         catch (Exception ex)
         {
             CrashLog.Write("ERROR", "Aktualizácia zlyhala", ex);

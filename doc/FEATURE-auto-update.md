@@ -152,8 +152,11 @@ public static class UpdateInstaller
 4. Pred reštartom **ulož stav** (`stats`, settings) — appka to už robí v `OnExit`/flush,
    over že `Shutdown()` cestou cez updater to spustí (`OnExit` sa zavolá).
 5. Updater skript po sebe **zmaže** temp súbory (na konci skriptu).
-6. Voliteľne (neskôr): overenie integrity stiahnutého súboru (hash/podpis). Pre single
-   usera a GitHub HTTPS skôr „nice-to-have".
+6. **Overenie integrity (implementované):** po stiahnutí sa počíta SHA-256 a porovná s `digest`
+   (`sha256:…`) z GitHub API; nezhoda zruší inštaláciu. Plus host-allowlist (HTTPS, len GitHub hosty).
+   *Rámec dôvery:* hash z GitHubu rieši integritu (poškodený download, CDN-tamper), nie kompromitáciu
+   účtu — public repo neumožňuje hocikomu vydať release, len vlastníkovi/kolaborantom. Plnú autenticitu
+   (aj proti kompromitácii účtu) by dal **podpis exe (Authenticode)** + overenie pred spustením — viď Fáza 3.
 
 ## Fázovanie (míľniky)
 
@@ -179,7 +182,9 @@ Self-update sa reálne overí len proti novšiemu releasu. Bez vydávania sa dá
 - [x] Cieľové miesto: rovnaké (`Environment.ProcessPath`).
 - [ ] **Fáza 3:** chránený priečinok (Program Files) → elevácia vs. fallback na ručné stiahnutie.
       Zatiaľ: 10× retry kópie, inak reštart pôvodnej verzie (per-user inštalácia to typicky nerieši).
-- [ ] **Fáza 3:** overenie integrity (hash/podpis) stiahnutého assetu.
+- [x] **Overenie integrity — hash:** SHA-256 voči GitHub `digest` + host-allowlist (HTTPS, GitHub hosty).
+- [ ] **Fáza 3 — podpis:** Authenticode podpis exe + overenie podpisu/vydavateľa pred spustením
+      (jediná ochrana aj proti kompromitácii GitHub účtu; vyžaduje code-signing certifikát).
 
 ## Referencie
 

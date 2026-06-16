@@ -3,8 +3,15 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 
 namespace StandReminder;
+
+/// <summary>Thrown when a downloaded update fails integrity verification (checksum mismatch).</summary>
+public class UpdateVerificationException : Exception
+{
+    public UpdateVerificationException(string message) : base(message) { }
+}
 
 /// <summary>
 /// Downloads the standalone release zip, extracts it, then hands off to a detached
@@ -51,6 +58,10 @@ public static class UpdateInstaller
 
         await DownloadAsync(info.DownloadUrl!, zipPath, progress).ConfigureAwait(false);
 
+        // integrity check: the downloaded bytes must match the hash GitHub reported.
+        // Catches corrupted/truncated downloads and CDN-level tampering before we run anything.
+        await VerifyChecksumAsync(zipPath, info.Sha256).ConfigureAwait(false);
+
         ZipFile.ExtractToDirectory(zipPath, extractDir);
 
         // the zip is no longer needed once extracted — free the ~66 MB right away
@@ -72,6 +83,10 @@ public static class UpdateInstaller
 
     private static async Task DownloadAsync(string url, string destPath, IProgress<double>? progress)
     {
+        // defense in depth: never fetch from anything but an HTTPS GitHub host
+        if (!UpdateChecker.IsTrustedDownloadHost(url))
+            throw new UpdateVerificationException($"Refusing to download from an untrusted host: {url}");
+
         using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
         http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("StandReminder", "1.0"));
 
@@ -93,6 +108,21 @@ public static class UpdateInstaller
                 progress?.Report((double)received / total.Value);
         }
         progress?.Report(1.0);
+    }
+
+    private static async Task VerifyChecksumAsync(string path, string? expectedSha256)
+    {
+        // older releases may not carry a digest — nothing to compare against, so don't block
+        if (string.IsNullOrEmpty(expectedSha256)) return;
+
+        string actual;
+        using (var sha = SHA256.Create())
+        using (var stream = File.OpenRead(path))
+            actual = Convert.ToHexString(await sha.ComputeHashAsync(stream).ConfigureAwait(false));
+
+        if (!string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase))
+            throw new UpdateVerificationException(
+                $"Checksum mismatch — expected {expectedSha256}, got {actual}. Update aborted.");
     }
 
     private static void LaunchUpdater(string scriptPath, int pid, string newExe,

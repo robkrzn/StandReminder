@@ -14,7 +14,7 @@ public enum UpdateCheckStatus
 }
 
 /// <summary>A newer release worth offering to the user.</summary>
-public record UpdateInfo(Version Version, string TagName, string Notes, string? DownloadUrl, string HtmlUrl);
+public record UpdateInfo(Version Version, string TagName, string Notes, string? DownloadUrl, string HtmlUrl, string? Sha256);
 
 public record UpdateCheckResult(UpdateCheckStatus Status, UpdateInfo? Info);
 
@@ -55,9 +55,9 @@ public static class UpdateChecker
 
             string notes = root.TryGetProperty("body", out var b) ? b.GetString() ?? "" : "";
             string htmlUrl = root.TryGetProperty("html_url", out var h) ? h.GetString() ?? "" : "";
-            string? download = FindAssetUrl(root);
+            var (download, sha256) = FindStandaloneAsset(root);
 
-            var info = new UpdateInfo(latest, tag, notes.Trim(), download, htmlUrl);
+            var info = new UpdateInfo(latest, tag, notes.Trim(), download, htmlUrl, sha256);
 
             if (!string.IsNullOrEmpty(skippedTag) &&
                 string.Equals(skippedTag, tag, StringComparison.OrdinalIgnoreCase))
@@ -86,17 +86,46 @@ public static class UpdateChecker
     private static Version Normalize(Version v) =>
         new(v.Major, v.Minor, Math.Max(v.Build, 0), Math.Max(v.Revision, 0));
 
-    private static string? FindAssetUrl(JsonElement root)
+    /// <summary>
+    /// Find the standalone asset's download URL and its server-side SHA-256 digest.
+    /// Rejects the asset if its URL is not an HTTPS GitHub host (so a forged release
+    /// can't point the updater at an arbitrary download server).
+    /// </summary>
+    private static (string? url, string? sha256) FindStandaloneAsset(JsonElement root)
     {
         if (!root.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array)
-            return null;
+            return (null, null);
 
         foreach (var asset in assets.EnumerateArray())
         {
             string name = asset.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
-            if (name.EndsWith(AssetSuffix, StringComparison.OrdinalIgnoreCase))
-                return asset.TryGetProperty("browser_download_url", out var u) ? u.GetString() : null;
+            if (!name.EndsWith(AssetSuffix, StringComparison.OrdinalIgnoreCase)) continue;
+
+            string? url = asset.TryGetProperty("browser_download_url", out var u) ? u.GetString() : null;
+            if (url == null || !IsTrustedDownloadHost(url))
+                return (null, null); // suspicious host → offer no in-app update (page link only)
+
+            // GitHub exposes the asset hash as "sha256:<hex>" (may be absent on old releases)
+            string? sha = null;
+            if (asset.TryGetProperty("digest", out var d) && d.ValueKind == JsonValueKind.String)
+            {
+                string raw = d.GetString() ?? "";
+                if (raw.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
+                    sha = raw["sha256:".Length..];
+            }
+            return (url, sha);
         }
-        return null;
+        return (null, null);
+    }
+
+    /// <summary>Only HTTPS URLs on GitHub's own hosts are allowed for downloads.</summary>
+    public static bool IsTrustedDownloadHost(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return false;
+        if (uri.Scheme != Uri.UriSchemeHttps) return false;
+        string host = uri.Host.ToLowerInvariant();
+        return host == "github.com"
+            || host == "www.github.com"
+            || host.EndsWith(".githubusercontent.com", StringComparison.Ordinal);
     }
 }

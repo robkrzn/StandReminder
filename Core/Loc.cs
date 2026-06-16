@@ -92,6 +92,8 @@ internal static class Loc
         ["UpdInstalling"] = ("Inštalujem a reštartujem…", "Installing and restarting…"),
         ["UpdError"] = ("Aktualizácia zlyhala. Skús to znova alebo stiahni ručne zo stránky releasu.",
                        "Update failed. Try again or download it manually from the release page."),
+        ["UpdVerifyFailed"] = ("Overenie stiahnutého súboru zlyhalo (nesedí kontrolný súčet). Aktualizácia bola zrušená.",
+                              "Verification of the downloaded file failed (checksum mismatch). The update was cancelled."),
         ["UpdUpToDate"] = ("Máš najnovšiu verziu.", "You're on the latest version."),
         ["UpdCheckFailed"] = ("Kontrolu aktualizácií sa nepodarilo dokončiť.", "Couldn't check for updates."),
         ["UpdDoneTitle"] = ("Aktualizácia dokončená", "Update complete"),

@@ -26,6 +26,8 @@ public partial class App : System.Windows.Application
     private bool _paused;
     private ReminderWindow? _reminder;
     private StatusWindow? _status;
+    private UpdateWindow? _updateWindow;
+    private bool _updateCheckRunning;
     private DateTime _statusClosedAt;
 
     private Drawing.Icon _iconSit = null!;
@@ -36,6 +38,7 @@ public partial class App : System.Windows.Application
     private WinForms.ToolStripMenuItem _miPause = null!;
     private WinForms.ToolStripMenuItem _miSwitch = null!;
     private WinForms.ToolStripMenuItem _miSettings = null!;
+    private WinForms.ToolStripMenuItem _miUpdate = null!;
     private WinForms.ToolStripMenuItem _miExit = null!;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -55,6 +58,7 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         CrashLog.Install(this);
         _watchdogInstalled = true;
+        UpdateInstaller.CleanupTemp(); // tidy up after a just-completed self-update
         _stats = Stats.Load();
         _lastStatsSave = DateTime.Now;
 
@@ -63,12 +67,43 @@ public partial class App : System.Windows.Application
         _iconIdle = CreateIdleIcon();
 
         BuildTray();
+        ReportPendingUpdate();
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _timer.Tick += (_, _) => Tick();
         _timer.Start();
 
         Tick(); // initialize immediately
+    }
+
+    /// <summary>
+    /// If the previous run handed off to the updater, confirm the outcome once: the
+    /// running version meeting/exceeding the pending tag means the swap succeeded,
+    /// otherwise the old build relaunched (e.g. copy was blocked).
+    /// </summary>
+    private void ReportPendingUpdate()
+    {
+        string pending = _settings.PendingUpdateVersion;
+        if (string.IsNullOrEmpty(pending)) return;
+
+        _settings.PendingUpdateVersion = "";
+        _settings.Save();
+
+        string version = $"{CurrentVersion.Major}.{CurrentVersion.Minor}.{Math.Max(CurrentVersion.Build, 0)}";
+        bool ok = TryVersion(pending, out var target) && CurrentVersion >= target;
+
+        var toast = ok
+            ? new ToastWindow("🚀", Loc.T("UpdDoneTitle"), Loc.F("UpdDoneBody", version), positive: true)
+            : new ToastWindow("⚠️", Loc.T("UpdFailTitle"), Loc.T("UpdFailBody"), positive: false);
+        toast.Show();
+    }
+
+    private static bool TryVersion(string tag, out Version version)
+    {
+        version = new Version(0, 0);
+        string s = tag.Trim();
+        if (s.StartsWith('v') || s.StartsWith('V')) s = s[1..];
+        return Version.TryParse(s, out version!);
     }
 
     // ---------- Tray ----------
@@ -102,6 +137,10 @@ public partial class App : System.Windows.Application
         _miSettings.Click += (_, _) => OpenSettings();
         menu.Items.Add(_miSettings);
 
+        _miUpdate = new WinForms.ToolStripMenuItem();
+        _miUpdate.Click += (_, _) => _ = RunUpdateCheckAsync(manual: true);
+        menu.Items.Add(_miUpdate);
+
         menu.Items.Add(new WinForms.ToolStripSeparator());
 
         _miExit = new WinForms.ToolStripMenuItem();
@@ -132,6 +171,7 @@ public partial class App : System.Windows.Application
         _miSwitch.Text = Loc.T("MenuSwitchNow");
         _miPause.Text = Loc.T(_paused ? "MenuResume" : "MenuPause");
         _miSettings.Text = Loc.T("MenuSettings");
+        _miUpdate.Text = Loc.T("MenuCheckUpdates");
         _miExit.Text = Loc.T("MenuExit");
     }
 
@@ -231,6 +271,7 @@ public partial class App : System.Windows.Application
 
         UpdateTray();
         PushStatus();
+        MaybeAutoCheckUpdates(now);
     }
 
     private void StartPhase(Phase phase)
@@ -413,6 +454,108 @@ public partial class App : System.Windows.Application
                 key.DeleteValue("StandReminder", throwOnMissingValue: false);
         }
         catch { /* no autostart rights -> ignore */ }
+    }
+
+    // ---------- Auto-update (GitHub Releases) ----------
+
+    private static readonly Version CurrentVersion =
+        typeof(App).Assembly.GetName().Version ?? new Version(0, 0);
+
+    /// <summary>Driven by the 1 s tick: check once per calendar day when enabled.</summary>
+    private void MaybeAutoCheckUpdates(DateTime now)
+    {
+        if (!_settings.AutoUpdateCheck || _updateCheckRunning || _updateWindow != null)
+            return;
+
+        var last = _settings.LastUpdateCheckTime;
+        if (last.HasValue && last.Value.Date >= now.Date)
+            return; // already checked today
+
+        _ = RunUpdateCheckAsync(manual: false);
+    }
+
+    private async Task RunUpdateCheckAsync(bool manual)
+    {
+        if (_updateCheckRunning) return;
+        _updateCheckRunning = true;
+        try
+        {
+            // a manual check ignores the skipped version, so the user can re-surface it
+            string? skip = manual || string.IsNullOrEmpty(_settings.SkippedVersion)
+                ? null : _settings.SkippedVersion;
+
+            var result = await UpdateChecker.CheckAsync(CurrentVersion, skip);
+
+            // record the attempt regardless of outcome → daily throttle holds even on failure
+            _settings.LastUpdateCheck = DateTime.Now.ToString("o");
+            _settings.Save();
+
+            switch (result.Status)
+            {
+                case UpdateCheckStatus.UpdateAvailable when result.Info != null:
+                    OpenUpdateWindow(result.Info);
+                    break;
+                case UpdateCheckStatus.UpToDate:
+                case UpdateCheckStatus.Skipped:
+                    if (manual)
+                        MessageBox.Show(Loc.T("UpdUpToDate"), "StandReminder",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+                    break;
+                case UpdateCheckStatus.Failed:
+                    if (manual)
+                        MessageBox.Show(Loc.T("UpdCheckFailed"), "StandReminder",
+                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                    break;
+            }
+        }
+        finally
+        {
+            _updateCheckRunning = false;
+        }
+    }
+
+    private void OpenUpdateWindow(UpdateInfo info)
+    {
+        if (_updateWindow != null)
+        {
+            _updateWindow.Activate();
+            return;
+        }
+
+        _updateWindow = new UpdateWindow(info, CurrentVersion);
+        _updateWindow.UpdateRequested += () => _ = StartUpdateAsync(info);
+        _updateWindow.Skipped += () =>
+        {
+            _settings.SkippedVersion = info.TagName;
+            _settings.Save();
+            _updateWindow?.Close();
+        };
+        _updateWindow.Closed += (_, _) => _updateWindow = null;
+        _updateWindow.Show();
+        _updateWindow.Activate();
+    }
+
+    private async Task StartUpdateAsync(UpdateInfo info)
+    {
+        var window = _updateWindow;
+        if (window == null) return;
+
+        try
+        {
+            window.SetDownloading();
+            var progress = new Progress<double>(window.SetProgress);
+            await UpdateInstaller.DownloadAndApplyAsync(info, progress);
+            // remember what we're updating to → the relaunched build confirms it on startup
+            _settings.PendingUpdateVersion = info.TagName;
+            _settings.Save();
+            // the detached updater is now waiting for us to exit so it can swap the exe
+            ExitApp();
+        }
+        catch (Exception ex)
+        {
+            CrashLog.Write("ERROR", "Aktualizácia zlyhala", ex);
+            window.ShowError(Loc.T("UpdError"));
+        }
     }
 
     private void ExitApp()

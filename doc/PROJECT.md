@@ -58,6 +58,10 @@ pri presune súboru sa nemení kód). SDK-style csproj globuje súbory automatic
 | `Core/CrashLog.cs` | Crash logging + health check (pozri sekciu nižšie). |
 | `Core/Stats.cs` | Denná štatistika sedenia/státia → `%APPDATA%\StandReminder\stats.json`. História **max 7 kalendárnych dní** — `Prune()` pri každom load/save maže staršie záznamy, súbor nemôže rásť. Počíta sa v `Tick()` (1 tick = 1 s do aktuálnej fázy, len keď nie je pauza/Idle), flush na disk každých 60 s + pri ukončení (`OnExit`). Zobrazenie: sekcia v StatusWindow flyoute — dnešné súčty + stacked bar graf 7 dní (modrá sedenie dole, zelená státie hore, tooltip s detailom). |
 | `Core/Loc.cs` | Lokalizácia: statický slovník všetkých UI stringov ako dvojice `(sk, en)`, prístup cez `Loc.T(key)` / `Loc.F(key, args)`. `Loc.Lang` sa nastavuje z `AppSettings.Language` pri štarte a po uložení nastavení (vtedy sa volá aj `App.ApplyMenuLanguage()` na tray menu; okná si texty naplnia pri vytvorení). Žiadne .resx — pri pridávaní UI textu vždy pridaj kľúč do `Loc.cs`, nie literál do kódu/XAML. |
+| `Core/UpdateChecker.cs` | Detekcia aktualizácií. `CheckAsync(current, skippedTag)` zavolá `GET releases/latest` (`HttpClient` + `User-Agent`, JSON cez `JsonDocument`), porovná tag s vlastnou verziou a vráti `UpdateCheckResult` so stavom (`UpToDate` / `UpdateAvailable` / `Skipped` / `Failed`). Asset = ten, čo končí `-standalone.zip`. Akákoľvek chyba → `Failed` (ticho, neloguje sa). |
+| `Core/UpdateInstaller.cs` | Self-update. `DownloadAndApplyAsync(info, progress)` stiahne zip do `%TEMP%\StandReminderUpdate`, rozbalí, **zip hneď zmaže** (~66 MB), rekurzívne nájde `StandReminder.exe`, zapíše updater `.ps1` a spustí ho **odpojene** (`powershell.exe`, skryté okno, cez `ArgumentList`). Volajúci hneď spraví `ExitApp()`. Updater počká na exit procesu (`Wait-Process` podľa PID), prepíše exe (10× retry, lebo bežiaci exe je zamknutý), reštartuje novú verziu a zmaže rozbalený priečinok. Cleanup je trojstupňový: (1) zip po rozbalení, (2) rozbalený priečinok v skripte po kopírovaní, (3) `CleanupTemp()` pri štarte novej verzie zmaže celý temp vrátane samotného skriptu (ten sa za behu nevie zmazať sám). |
+| `Views/UpdateWindow.xaml(.cs)` | Dark okno (rovnaké tokeny ako ostatné popupy, vpravo dole ako ReminderWindow). Ukáže novú verziu, changelog (`body`) v scrollovateľnej karte so slim dark scrollbarom, odkaz „Otvoriť stránku releasu". Tlačidlá: **Aktualizovať** / **Neskôr** / **Preskočiť túto verziu**. Pri sťahovaní prepne na progress bar (`SetDownloading`/`SetProgress`). Eventy `UpdateRequested`, `Skipped`. Ak release nemá standalone asset, tlačidlo Aktualizovať sa skryje a ostane odkaz na stránku. |
+| `Views/ToastWindow.xaml(.cs)` | Ľahký tmavý toast v pravom dolnom rohu — neaktivuje sa (`ShowActivated=False`, `ShowInTaskbar=False`), po 6 s sám zmizne, klikom sa zavrie. Konštruktor `(emoji, title, message, positive)`. Použitý na potvrdenie po self-update (zelený/jantárový badge). Znovupoužiteľný aj pre budúce notifikácie. |
 | `Assets/app.ico` | Ikona aplikácie (exe, hlavička okna, taskbar) — zelený kruh so stojacou postavičkou, rovnaká geometria ako tray ikona. Zapojená cez `<ApplicationIcon>` v csproj. **Negeneruje sa pri builde** — pri zmene dizajnu ju treba pregenerovať skriptom `tools/generate-icon.ps1` a commitnúť. |
 | `tools/generate-icon.ps1` | PowerShell skript, ktorý nakreslí logo cez System.Drawing (veľkosti 16–256 px) a zloží ICO kontajner s PNG frame-ami. Spúšťa sa z koreňa repa: `powershell -File tools\generate-icon.ps1`. |
 
@@ -87,7 +91,7 @@ Tri ikony kreslené runtime cez GDI+ (`MakeIcon` + `CreateSitIcon/CreateStandIco
 - ⚪ sivá `#787E94` — pause symbol (‖) — Idle alebo pozastavené
 
 Interakcie: **ľavý klik** = StatusWindow flyout, **pravý klik** = menu
-(Zmeniť pozíciu teraz / Pozastaviť / Nastavenia… / Ukončiť). Tooltip ikony ukazuje
+(Zmeniť pozíciu teraz / Pozastaviť / Nastavenia… / Skontrolovať aktualizácie… / Ukončiť). Tooltip ikony ukazuje
 stav a odpočet (limit 63 znakov). Flyout má 300 ms guard proti znovuotvoreniu
 pri zatváracom kliku na ikonu.
 
@@ -125,13 +129,22 @@ s vlastným slim scrollbarom v `Border.Resources` popupu). Pribudli brushe `Inpu
   "WorkEnd": "16:00",
   "PlaySound": true,
   "StartWithWindows": false,
-  "Language": "sk"
+  "Language": "sk",
+  "AutoUpdateCheck": true,
+  "SkippedVersion": "",
+  "LastUpdateCheck": null,
+  "PendingUpdateVersion": ""
 }
 ```
 
 - Časy sú stringy `"HH:mm"`, parsované cez `TimeSpan.TryParse` (properties `WorkStartTime/WorkEndTime`)
 - Autostart: registry `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, hodnota `StandReminder`
 - Po uložení nastavení sa aktuálna fáza reštartuje s novým intervalom
+- `AutoUpdateCheck` (default zap.) — checkbox v nastaveniach; `SkippedVersion` = tag, ktorý
+  používateľ „preskočil"; `LastUpdateCheck` = ISO timestamp poslednej kontroly (throttle 1×/deň,
+  parsovaný cez `[JsonIgnore] LastUpdateCheckTime`); `PendingUpdateVersion` = tag, na ktorý práve
+  prebieha update (pred reštartom sa zapíše, nová verzia ho pri štarte vyhodnotí a vyčistí).
+  Pozri sekciu *Automatické aktualizácie*.
 
 ## Crash log a health check (CrashLog.cs)
 
@@ -152,6 +165,46 @@ s vlastným slim scrollbarom v `Border.Resources` popupu). Pribudli brushe `Inpu
 - **Pozor pri interpretácii logu:** republish workflow používa `Stop-Process`, čo je nečistý
   kill — WARN záznamy z časov vývoja/republishov nie sú skutočné crashe používateľa.
 
+## Automatické aktualizácie (self-update z GitHub Releases)
+
+Implementované podľa [FEATURE-auto-update.md](FEATURE-auto-update.md). Repo `robkrzn/StandReminder`
+je verejné → GitHub API bez autentifikácie.
+
+**Workflow:** `App.Tick()` raz denne (a hneď pri štarte, keď `LastUpdateCheck` nie je dnešný)
+volá `UpdateChecker.CheckAsync` — ak je novšia verzia a nie je „preskočená", otvorí `UpdateWindow`.
+Tray položka „Skontrolovať aktualizácie…" vyvolá kontrolu manuálne (ignoruje throttle aj
+`SkippedVersion`; pri žiadnej novšej verzii / chybe ukáže `MessageBox`). Po kliku **Aktualizovať**
+sa zip stiahne, rozbalí a spustí sa odpojený PowerShell updater; appka spraví `ExitApp()`,
+updater prepíše exe a reštartuje novú verziu.
+
+**Potvrdenie po update:** pred reštartom sa do `PendingUpdateVersion` zapíše cieľový tag.
+Nová verzia pri štarte (`App.ReportPendingUpdate`) tag vyhodnotí a vyčistí — ak bežiaca verzia
+dosahuje/prekračuje cieľ, ukáže tmavý toast (`ToastWindow`) „Aktualizácia dokončená", inak
+(kopírovanie zlyhalo, beží stará verzia) upozorní na nedokončený update. Toast sa použil namiesto
+WinForms balloon tipu — ten je nespoľahlivý (Focus Assist ho zožerie, zlyhá hneď po vytvorení
+ikony) a nesedel by s dizajnom. *Pozn.:* notifikácia sa zjaví len pri update **na** build, ktorý
+túto logiku obsahuje (od verzie po zavedení featury, t. j. v1.0.4+). Aktuálnu verziu appky vidno
+aj v hlavičke okna Nastavenia (`SettingsWindow`, kľúč `SetVersion`).
+
+**Kľúčové rozhodnutia / pasce:**
+- **Bežiaci `.exe` sa nevie prepísať sám** (Windows ho drží zamknutý) → preto detached
+  `powershell.exe` skript, ktorý `Wait-Process` na PID, až potom kopíruje (s 10× retry) a reštartuje.
+- **Vždy sa sťahuje `*-standalone.zip`** (self-contained, ~66 MB) — funguje bez ohľadu na to,
+  či je na PC .NET runtime, takže update nikdy nerozbije appku. Appka nevie spoľahlivo zistiť,
+  ktorý variant beží, preto sa standalone berie vždy.
+- **Verzie:** vlastná = `Assembly.GetName().Version` (z csproj `<Version>` → `1.0.3.0`), tag
+  „v1.0.4" → strip „v" → `Version.Parse`. Pred porovnaním sa oba normalizujú (nedefinované
+  Build/Revision `-1` → `0`), takže `1.0.4 > 1.0.3.0` aj `v1.0.3 == 1.0.3.0` (rovnaká → neponúkne).
+- **Graceful degradation:** bez internetu / chyba API → `Failed`, ticho, neloguje sa ako chyba.
+  Zlyhanie *inštalácie* (po kliku Aktualizovať) sa loguje (`CrashLog.Write ERROR`) a okno ukáže chybu.
+- **Throttle:** `LastUpdateCheck` sa zapíše po **každom** pokuse (aj neúspešnom), takže auto-kontrola
+  beží max 1×/deň aj keď zlyhá. Manuálna kontrola throttle nerešpektuje.
+- **Test bez vydávania:** dočasne zníž lokálnu `<Version>` (napr. na `1.0.0`), aby `releases/latest`
+  vyzeral ako novší a otestoval sa flow detekcie/sťahovania.
+- **Otvorené (Fáza 3):** ak appka beží z chráneného priečinka (Program Files), `Copy-Item` zlyhá
+  bez elevácie — zatiaľ updater po 10 retry vzdá kopírovanie a reštartuje pôvodnú verziu
+  (per-user inštalácia cez HKCU autostart túto situáciu typicky nemá).
+
 ## Opravené chyby (história)
 
 - **2026-06-11 — pád pri kliku na flyout:** WPF vyhodí `InvalidOperationException`, ak sa
@@ -171,6 +224,9 @@ s vlastným slim scrollbarom v `Border.Resources` popupu). Pribudli brushe `Inpu
 
 ## Nápady na ďalší rozvoj (zatiaľ nerealizované)
 
+- **Automatické aktualizácie — Fáza 3 (doladenie):** elevácia / fallback pri chránenom
+  priečinku, voliteľné overenie hashu/podpisu stiahnutého assetu. Fázy 1–2 hotové —
+  pozri sekciu *Automatické aktualizácie* a [FEATURE-auto-update.md](FEATURE-auto-update.md).
 - Auto-dismiss pripomienky po X minútach + detekcia nečinnosti (používateľ nie je pri PC)
 - Vlastné zvuky, voľba dňa v týždni (víkendy)
 

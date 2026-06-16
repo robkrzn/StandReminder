@@ -23,6 +23,7 @@ internal static class Loc
         ["MenuPause"] = ("Pozastaviť pripomienky", "Pause reminders"),
         ["MenuResume"] = ("Pokračovať v pripomienkach", "Resume reminders"),
         ["MenuSettings"] = ("Nastavenia…", "Settings…"),
+        ["MenuCheckUpdates"] = ("Skontrolovať aktualizácie…", "Check for updates…"),
         ["MenuExit"] = ("Ukončiť", "Exit"),
 
         // Tray tooltip / status line
@@ -71,10 +72,35 @@ internal static class Loc
                           "The app stays silent outside these hours."),
         ["SetSound"] = ("Zvukové upozornenie", "Sound notification"),
         ["SetAutostart"] = ("Spustiť automaticky pri štarte Windows", "Start automatically with Windows"),
+        ["SetAutoUpdate"] = ("Automaticky kontrolovať aktualizácie", "Check for updates automatically"),
         ["SetLanguage"] = ("Jazyk", "Language"),
         ["SetSave"] = ("Uložiť", "Save"),
         ["SetCancel"] = ("Zrušiť", "Cancel"),
         ["SetValidation"] = ("Koniec pracovného času musí byť neskôr ako začiatok.",
                             "Work end time must be later than start time."),
+
+        // Update window
+        ["UpdTitle"] = ("Dostupná aktualizácia", "Update available"),
+        ["UpdVersion"] = ("Verzia {0} → {1}", "Version {0} → {1}"),
+        ["UpdNotesHeader"] = ("Čo je nové", "What's new"),
+        ["UpdNoNotes"] = ("(Bez popisu zmien.)", "(No release notes.)"),
+        ["UpdBtnUpdate"] = ("Aktualizovať", "Update now"),
+        ["UpdBtnLater"] = ("Neskôr", "Later"),
+        ["UpdBtnSkip"] = ("Preskočiť túto verziu", "Skip this version"),
+        ["UpdOpenPage"] = ("Otvoriť stránku releasu", "Open release page"),
+        ["UpdDownloading"] = ("Sťahujem… {0} %", "Downloading… {0}%"),
+        ["UpdInstalling"] = ("Inštalujem a reštartujem…", "Installing and restarting…"),
+        ["UpdError"] = ("Aktualizácia zlyhala. Skús to znova alebo stiahni ručne zo stránky releasu.",
+                       "Update failed. Try again or download it manually from the release page."),
+        ["UpdUpToDate"] = ("Máš najnovšiu verziu.", "You're on the latest version."),
+        ["UpdCheckFailed"] = ("Kontrolu aktualizácií sa nepodarilo dokončiť.", "Couldn't check for updates."),
+        ["UpdDoneTitle"] = ("Aktualizácia dokončená", "Update complete"),
+        ["UpdDoneBody"] = ("StandReminder teraz beží vo verzii {0}.", "StandReminder is now running version {0}."),
+        ["UpdFailTitle"] = ("Aktualizácia sa nedokončila", "Update didn't complete"),
+        ["UpdFailBody"] = ("Beží pôvodná verzia. Skús to prosím znova.",
+                          "The previous version is running. Please try again."),
+
+        // Settings — app version label
+        ["SetVersion"] = ("verzia {0}", "version {0}"),
     };
 }

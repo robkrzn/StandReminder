@@ -32,6 +32,7 @@ public partial class SettingsWindow : Window
         if (EndCombo.SelectedItem == null) EndCombo.SelectedItem = "16:00";
         SoundCheck.IsChecked = _settings.PlaySound;
         AutostartCheck.IsChecked = _settings.StartWithWindows;
+        AutoUpdateCheck.IsChecked = _settings.AutoUpdateCheck;
 
         LangCombo.Items.Add("Slovenčina");
         LangCombo.Items.Add("English");
@@ -46,6 +47,8 @@ public partial class SettingsWindow : Window
     {
         Title = Loc.T("SetTitle");
         HeaderText.Text = Loc.T("SetHeader");
+        var v = typeof(App).Assembly.GetName().Version ?? new Version(0, 0);
+        VersionText.Text = Loc.F("SetVersion", $"{v.Major}.{v.Minor}.{Math.Max(v.Build, 0)}");
         IntervalsHeader.Text = Loc.T("SetIntervals");
         RatioHint.Text = Loc.T("SetRatioHint");
         WorkHoursHeader.Text = Loc.T("SetWorkHours");
@@ -54,6 +57,7 @@ public partial class SettingsWindow : Window
         WorkHint.Text = Loc.T("SetWorkHint");
         SoundCheck.Content = Loc.T("SetSound");
         AutostartCheck.Content = Loc.T("SetAutostart");
+        AutoUpdateCheck.Content = Loc.T("SetAutoUpdate");
         LangLabel.Text = Loc.T("SetLanguage");
         SaveButton.Content = Loc.T("SetSave");
         CancelButton.Content = Loc.T("SetCancel");
@@ -88,6 +92,7 @@ public partial class SettingsWindow : Window
         _settings.WorkEnd = end;
         _settings.PlaySound = SoundCheck.IsChecked == true;
         _settings.StartWithWindows = AutostartCheck.IsChecked == true;
+        _settings.AutoUpdateCheck = AutoUpdateCheck.IsChecked == true;
         _settings.Language = LangCombo.SelectedIndex == 1 ? "en" : "sk";
 
         Saved?.Invoke();

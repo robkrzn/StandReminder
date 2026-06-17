@@ -38,6 +38,28 @@ SDK ignoruje a potichu pribalí celý runtime (~165 MB exe). Vždy používaj MS
 Výstup: `publish/StandReminder.exe`. Pred republish treba ukončiť bežiacu inštanciu
 (`Stop-Process -Name StandReminder`), inak je exe zamknutý.
 
+### Task runner (`tasks.ps1`)
+
+V koreni je PowerShell ekvivalent „package.json scripts" — `tasks.ps1`. Spustenie bez
+argumentu vypíše všetky tasky (ako `npm run`); inak `.\tasks.ps1 <task> [args]`.
+
+| Task | Čo robí |
+|---|---|
+| `build` | `dotnet build -c Release` |
+| `deploy` (alias `restart`) | stop appky → publish do `publish/` → spustí (najčastejší pri vývoji) |
+| `publish` | len publish framework-dependent do `publish/` (bez spustenia) |
+| `run` / `stop` / `version` / `clean` / `icon` | drobné pomocné (run = `dotnet run`, clean maže build výstupy) |
+| `release <X.Y.Z>` | **lokálna** časť releasu: bump verzie + commit + publish oboch variantov + zipy (len exe) + stub `dist/RELEASE_NOTES_NNN.md` |
+| `gh-release <X.Y.Z>` | **GitHub** časť: `git push` + `gh release create` (oba zipy + notes) + overenie `latest`/digestu |
+
+Release je zámerne dvojkrokový: `release X.Y.Z` spraví všetko mechanické a vytvorí stub
+release notes → ručne ich doplň → `gh-release X.Y.Z` vydá. Kroky sú idempotentné (bump sa
+preskočí ak verzia sedí). Postup zrkadlí sekciu nižšie/`gh release` ritual.
+
+**Pozor:** `tasks.ps1` musí ostať uložený ako **UTF-8 s BOM** — inak Windows PowerShell 5.1
+prečíta diakritiku/pomlčky zle a skript sa nedá parsovať. Ak by ExecutionPolicy blokovala
+spustenie: `powershell -ExecutionPolicy Bypass -File .\tasks.ps1 <task>`.
+
 ## Architektúra a súbory
 
 Štruktúra priečinkov: `Views/` = okná (XAML + code-behind), `Core/` = logika bez UI,

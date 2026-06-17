@@ -7,12 +7,15 @@ public partial class ReminderWindow : Window
 {
     public event Action? Accepted;
     public event Action? Snoozed;
+    public event Action? Skipped;
 
     public ReminderWindow(Phase target)
     {
         InitializeComponent();
 
         var settings = AppSettings.Load();
+
+        SkipButton.Content = Loc.T("RemBtnSkip");
 
         if (target == Phase.Standing)
         {
@@ -22,6 +25,7 @@ public partial class ReminderWindow : Window
             SubtitleText.Text = Loc.F("RemBodyStand", settings.StandMinutes);
             AcceptButton.Content = Loc.T("RemBtnStand");
             AcceptButton.Background = (Brush)FindResource("AccentStandBrush");
+            SkipButton.ToolTip = Loc.T("RemSkipTipStand");
         }
         else
         {
@@ -31,6 +35,7 @@ public partial class ReminderWindow : Window
             SubtitleText.Text = Loc.F("RemBodySit", settings.SitMinutes);
             AcceptButton.Content = Loc.T("RemBtnSit");
             AcceptButton.Background = (Brush)FindResource("AccentSitBrush");
+            SkipButton.ToolTip = Loc.T("RemSkipTipSit");
         }
 
         Loaded += (_, _) => PositionBottomRight();
@@ -46,4 +51,6 @@ public partial class ReminderWindow : Window
     private void Accept_Click(object sender, RoutedEventArgs e) => Accepted?.Invoke();
 
     private void Snooze_Click(object sender, RoutedEventArgs e) => Snoozed?.Invoke();
+
+    private void Skip_Click(object sender, RoutedEventArgs e) => Skipped?.Invoke();
 }

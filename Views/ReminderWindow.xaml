@@ -33,13 +33,17 @@
             <Grid Margin="0,20,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="8"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <Button x:Name="AcceptButton" Grid.Column="0" Style="{StaticResource PrimaryButton}"
                         Click="Accept_Click"/>
                 <Button Grid.Column="2" Style="{StaticResource GhostButton}" Content="+5 min"
                         Click="Snooze_Click"/>
+                <Button x:Name="SkipButton" Grid.Column="4" Style="{StaticResource GhostButton}"
+                        Click="Skip_Click"/>
             </Grid>
         </StackPanel>
     </Border>

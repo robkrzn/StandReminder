@@ -41,6 +41,11 @@ internal static class Loc
         ["RemBodySit"] = ("Spusti stôl a pohodlne si sadni na {0} minút.",
                          "Lower the desk and sit back for {0} minutes."),
         ["RemBtnSit"] = ("Sedím ✓", "Sitting ✓"),
+        ["RemBtnSkip"] = ("Preskočiť", "Skip"),
+        ["RemSkipTipStand"] = ("Preskočiť toto státie – sedím ďalší celý cyklus",
+                              "Skip this standing — keep sitting a full cycle"),
+        ["RemSkipTipSit"] = ("Preskočiť toto sedenie – stojím ďalší celý cyklus",
+                            "Skip this sitting — keep standing a full cycle"),
 
         // Status flyout
         ["StPaused"] = ("Pozastavené", "Paused"),

@@ -309,6 +309,10 @@ public partial class App : System.Windows.Application
         if (_settings.PlaySound)
             System.Media.SystemSounds.Exclamation.Play();
 
+        // "skip" keeps the user in the position they're in now (the opposite of the
+        // phase being suggested) and restarts its full interval
+        Phase stay = target == Phase.Standing ? Phase.Sitting : Phase.Standing;
+
         _reminder = new ReminderWindow(target);
         _reminder.Accepted += () => StartPhase(target);
         _reminder.Snoozed += () =>
@@ -316,6 +320,7 @@ public partial class App : System.Windows.Application
             _phaseEnd = DateTime.Now.AddMinutes(5);
             CloseReminder();
         };
+        _reminder.Skipped += () => StartPhase(stay);
         _reminder.Closed += (_, _) => _reminder = null;
         _reminder.Show();
     }

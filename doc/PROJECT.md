@@ -50,7 +50,7 @@ pri presune súboru sa nemení kód). SDK-style csproj globuje súbory automatic
 | `App.xaml` | Globálne resources: farebná paleta, štýly `PrimaryButton`, `GhostButton`, `DarkSlider`, `DarkCheckBox`, `DarkCombo`. `ShutdownMode=OnExplicitShutdown`, žiadne StartupUri. |
 | `App.xaml.cs` | **Jadro aplikácie.** Tray ikona + kontextové menu, stavový automat fáz, `DispatcherTimer` (1 s tick), kreslenie tray ikon cez GDI+, autostart cez registry, single-instance mutex (`StandReminder_SingleInstance`). |
 | `Core/AppSettings.cs` | Model nastavení + JSON load/save do `%APPDATA%\StandReminder\settings.json`. |
-| `Views/ReminderWindow.xaml(.cs)` | Popup notifikácia pri zmene fázy (pravý dolný roh, `Topmost`, `ShowActivated=False` — nekradne fokus). Tlačidlá: potvrdiť zmenu / `+5 min` snooze. Eventy `Accepted`, `Snoozed`. |
+| `Views/ReminderWindow.xaml(.cs)` | Popup notifikácia pri zmene fázy (pravý dolný roh, `Topmost`, `ShowActivated=False` — nekradne fokus). Tlačidlá: potvrdiť zmenu / `+5 min` snooze / `Preskočiť`. Eventy `Accepted`, `Snoozed`, `Skipped`. **Preskočiť** = ostať v aktuálnej pozícii a reštartovať jej plný interval (tooltip podľa smeru vysvetľuje dôsledok). Layout: primárne tlačidlo (`*`) + dva ghost buttony v jednom riadku. |
 | `Views/StatusWindow.xaml(.cs)` | Flyout po **ľavom kliku** na tray ikonu: aktuálna pozícia, uplynutý čas, progress bar, zostávajúci čas, tlačidlo ⚙ (nastavenia) a „Zmeniť pozíciu teraz". Zavrie sa pri `Deactivated`. Eventy `SettingsRequested`, `SwitchRequested`. |
 | `Views/SettingsWindow.xaml(.cs)` | Okno nastavení: slidery intervalov (sedenie 10–120 min, státie 5–60 min), pracovný čas (ComboBoxy 05:00–21:30 po 30 min), zvuk, autostart. Event `Saved`. Tmavý title bar cez `UiNative.UseDarkTitleBar` (volané v `SourceInitialized`). |
 | `Ui/UiNative.cs` | P/Invoke na `dwmapi.dll` (`DwmSetWindowAttribute`): `UseDarkTitleBar` (attr 20) a `UseRoundedCorners` (attr 33, Windows 11) pre zaoblené rohy popupov. |
@@ -76,7 +76,10 @@ enum Phase { Idle, Sitting, Standing }
   - aktívna fáza + koniec pracovného času → `Idle`, zavrie sa pripomienka
   - aktívna fáza + `now >= _phaseEnd` a popup nie je otvorený → `ShowReminder(opačná fáza)`
 - `StartPhase(phase)` nastaví `_phaseStart` a `_phaseEnd = start + interval` z nastavení
-- **Snooze** posunie `_phaseEnd` o 5 min (fáza pokračuje, popup sa zavrie)
+- **Snooze** (`+5 min`) posunie `_phaseEnd` o 5 min (fáza pokračuje, popup sa zavrie)
+- **Skip** (`Preskočiť`) preskočí navrhovanú zmenu pozície a `StartPhase(stay)` reštartuje
+  aktuálnu fázu na plný interval (`stay` = opak `target`-u) — napr. pri výzve postaviť sa
+  ostaneš sedieť ďalší celý cyklus
 - **Pauza** (`_paused`): tiky sa ignorujú; pri obnovení sa fáza reštartuje s plným intervalom
 - Popup zostáva otvorený, kým ho používateľ nepotvrdí (zámerné — pri odchode od PC)
 - `PushStatus()` aktualizuje otvorený StatusWindow flyout pri každom ticku
